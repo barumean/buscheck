@@ -13,18 +13,63 @@
 
 ## 초기 설정
 
-### 1. API 인증키를 GitHub Secret으로 등록
+### 1. GitHub Secret 등록 방법 (공통)
 
-리포지토리 **Settings → Secrets and variables → Actions → New repository secret** 에서
-아래 이름으로 **디코딩된** 인증키를 등록하세요. (요청 시 requests 라이브러리가 URL 인코딩을
-자동으로 처리하므로 인코딩된 키를 넣으면 이중 인코딩되어 오류가 납니다.)
+이 프로젝트에서 쓰는 키(공공데이터포털 인증키, 텔레그램 봇 토큰 등)는 코드/설정 파일에 직접
+적지 않고 전부 **GitHub Secret**으로 등록합니다. Secret은 리포지토리에 암호화되어 저장되고
+워크플로 실행 중에만 환경변수로 주입되며, 코드나 로그에 노출되지 않습니다.
 
-```
-이름: BUS_SERVICE_KEY
-값:   (공공데이터포털에서 발급받은 디코딩 인증키)
-```
+1. GitHub에서 리포지토리(`barumean/buscheck`) 페이지로 이동
+2. 상단 **Settings** 탭 클릭 (모바일 앱에서는 리포지토리 메뉴 → Settings)
+3. 좌측 메뉴에서 **Secrets and variables → Actions**
+4. **New repository secret** 클릭
+5. `Name`에 아래 secret 이름 중 하나, `Secret`에 해당 값을 입력하고 **Add secret**
+6. 필요한 secret 개수만큼 반복
 
-### 2. 관심 버스 등록 (`config/buses.json`)
+등록해야 할 secret 목록:
+
+| Secret 이름 | 값 | 필수 여부 |
+|---|---|---|
+| `BUS_SERVICE_KEY` | 공공데이터포털에서 발급받은 **디코딩** 인증키 | 필수 |
+| `TELEGRAM_BOT_TOKEN` | 텔레그램 봇 토큰 (아래 2번 참고) | 선택 (알림 원할 때) |
+| `TELEGRAM_CHAT_ID` | 알림을 받을 나의 채팅 ID (아래 2번 참고) | 선택 (알림 원할 때) |
+
+`BUS_SERVICE_KEY`는 반드시 **디코딩된** 키(`n/aR5AGp...==` 형태, `%2F`나 `%3D` 같은 URL 인코딩
+문자가 없는 값)를 넣어야 합니다. 코드에서 `requests` 라이브러리가 요청 시 자동으로 URL 인코딩을
+하기 때문에, 이미 인코딩된 키(`n%2FaR5AGp...%3D%3D`)를 넣으면 이중 인코딩되어 인증 오류가 납니다.
+
+같은 공공데이터포털 계정 키 하나로 `busarrivalservice`(도착정보)와 `busstationservice`
+(정류소 검색) 두 API를 모두 호출하므로, **정류소 검색용 별도 secret은 필요 없습니다.**
+다만 포털에서 두 API를 각각 별도로 "활용신청"해서 승인받아야 정상 호출됩니다.
+(승인 상태는 공공데이터포털 **마이페이지 → 데이터활용 → Open API 활용신청 현황**에서 확인)
+
+### 2. 텔레그램 푸시 알림 설정 (선택)
+
+아침에 GitHub 앱을 열지 않고도 바로 결과를 받고 싶다면 텔레그램 봇으로 알림을 받을 수 있습니다.
+설정하면 워크플로 실행 시 자동으로 메시지가 전송되며, 설정하지 않으면 기존처럼
+Actions Summary로만 표시됩니다(생략 가능).
+
+1. 텔레그램에서 **@BotFather** 를 검색해 대화 시작
+2. `/newbot` 입력 → 봇 이름과 username(끝은 `bot`으로 끝나야 함) 설정
+3. 생성 완료 시 나오는 **토큰**(`123456789:AA...` 형태) 복사 →
+   `TELEGRAM_BOT_TOKEN` secret 값으로 등록
+4. 새로 만든 봇과의 채팅방에서 아무 메시지나 하나 보내기 (예: "hi")
+   - 봇은 사용자가 먼저 말을 걸어야 메시지를 보낼 수 있습니다
+5. 나의 chat_id 확인: 브라우저에서 아래 주소 접속 (TOKEN을 3번에서 받은 값으로 교체)
+
+   ```
+   https://api.telegram.org/bot<TOKEN>/getUpdates
+   ```
+
+   응답 JSON에서 `"message":{"chat":{"id": 123456789, ...}}` 의 `id` 값이 chat_id입니다.
+   (또는 텔레그램에서 **@userinfobot** 을 검색해 대화하면 내 id를 바로 알려줍니다)
+6. 그 값을 `TELEGRAM_CHAT_ID` secret으로 등록
+
+이후 워크플로가 실행되면 `scripts/check_bus_arrival.py`가 두 secret이 모두 설정된 경우에만
+텔레그램으로 도착정보를 전송합니다. (`send_telegram_message` 함수, 실패해도 워크플로 자체는
+계속 진행되고 경고만 로그에 남습니다.)
+
+### 3. 관심 버스 등록 (`config/buses.json`)
 
 ```json
 {
@@ -61,8 +106,8 @@
 - **수동 실행**: GitHub 웹 또는 **GitHub Mobile 앱**에서 리포지토리 →
   **Actions → 아침 버스 도착정보 확인 → Run workflow** 로 언제든 실행할 수 있습니다.
 - **결과 확인**: 실행이 끝난 워크플로 런을 열면 **Summary** 탭에 도착정보 표가 표시됩니다.
-  (현재는 별도 푸시 알림 없이 Actions 실행 결과로만 확인하는 구성입니다. 텔레그램이나
-  ntfy.sh 같은 푸시 알림이 필요하면 언제든 추가해 드릴 수 있습니다.)
+- **텔레그램 알림**: `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` secret을 등록해두면
+  (위 "초기 설정 → 2. 텔레그램 푸시 알림 설정" 참고) 실행할 때마다 텔레그램 메시지로도 받습니다.
 
 ### 로컬 실행
 

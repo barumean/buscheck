@@ -178,6 +178,29 @@ def render_markdown_table(rows: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def render_telegram_text(rows: list[dict[str, str]]) -> str:
+    lines = ["🚌 오늘 아침 버스 도착정보"]
+    for row in rows:
+        star = f" {row['favorite']}" if row["favorite"] else ""
+        lines.append(
+            f"{row['order']}. [{row['routeName']}]{star} {row['stationName']} "
+            f"({row['mobileNo']}) - {row['arrival']}"
+        )
+    return "\n".join(lines)
+
+
+def send_telegram_message(token: str, chat_id: str, text: str) -> None:
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    try:
+        resp = requests.post(url, json={"chat_id": chat_id, "text": text}, timeout=REQUEST_TIMEOUT)
+        resp.raise_for_status()
+        body = resp.json()
+        if not body.get("ok"):
+            print(f"[경고] 텔레그램 전송 실패: {body}", file=sys.stderr)
+    except (requests.RequestException, ValueError) as exc:
+        print(f"[경고] 텔레그램 전송 실패: {exc}", file=sys.stderr)
+
+
 def main() -> None:
     service_key = get_service_key()
     buses = load_config()
@@ -192,6 +215,17 @@ def main() -> None:
             f.write("## 오늘 아침 버스 도착정보\n\n")
             f.write(table)
             f.write("\n")
+
+    telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if telegram_token and telegram_chat_id:
+        send_telegram_message(telegram_token, telegram_chat_id, render_telegram_text(rows))
+    else:
+        print(
+            "[안내] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 가 설정되지 않아 "
+            "텔레그램 알림은 전송하지 않았습니다.",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":
