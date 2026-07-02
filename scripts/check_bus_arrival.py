@@ -267,6 +267,14 @@ def send_telegram_message(token: str, chat_id: str, text: str) -> None:
     if token.lower().startswith("bot"):
         token = token[3:]
     chat_id = chat_id.strip()
+    # 토큰 값은 노출하지 않고 형태(길이/콜론 위치)만 디버그로 확인한다.
+    if DEBUG:
+        colon = token.find(":")
+        print(
+            f"[디버그] 텔레그램 토큰 길이={len(token)}, ':' 위치={colon}, "
+            f"chat_id 길이={len(chat_id)} (정상 토큰은 대략 46자, '숫자:영숫자' 형태)",
+            file=sys.stderr,
+        )
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     try:
         resp = requests.post(url, json={"chat_id": chat_id, "text": text}, timeout=REQUEST_TIMEOUT)
@@ -274,8 +282,11 @@ def send_telegram_message(token: str, chat_id: str, text: str) -> None:
         body = resp.json()
         if not body.get("ok"):
             print(f"[경고] 텔레그램 전송 실패: {body}", file=sys.stderr)
+        elif DEBUG:
+            print("[디버그] 텔레그램 전송 성공", file=sys.stderr)
     except (requests.RequestException, ValueError) as exc:
-        print(f"[경고] 텔레그램 전송 실패: {exc}", file=sys.stderr)
+        detail = getattr(getattr(exc, "response", None), "text", "")
+        print(f"[경고] 텔레그램 전송 실패: {exc} {detail}".strip(), file=sys.stderr)
 
 
 def main() -> None:
