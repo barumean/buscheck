@@ -1,0 +1,26 @@
+[
+  {
+    "order": 1,
+    "mobileNo": "27109",
+    "stationName": "인덕원퍼스비엘아파트.동아에코빌",
+    "favorite": false,
+    "routeName": "1-1",
+    "stationId": null
+  },
+  {
+    "order": 2,
+    "mobileNo": "27101",
+    "stationName": "두산위브2단지",
+    "favorite": false,
+    "routeName": "12",
+    "stationId": null
+  },
+  {
+    "order": 3,
+    "mobileNo": "27146",
+    "stationName": "내손초등학교.인덕원퍼스비엘아파트",
+    "favorite": false,
+    "routeName": "7",
+    "stationId": null
+  }
+]

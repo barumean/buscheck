@@ -1,0 +1,27 @@
+name: 아침 버스 도착정보 확인
+
+on:
+  schedule:
+    # 06:20 KST(UTC+9) = 전날 21:20 UTC
+    - cron: "20 21 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check-bus-arrival:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 버스 도착정보 조회
+        env:
+          BUS_SERVICE_KEY: ${{ secrets.BUS_SERVICE_KEY }}
+        run: python scripts/check_bus_arrival.py
