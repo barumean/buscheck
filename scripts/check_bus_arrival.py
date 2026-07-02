@@ -34,6 +34,15 @@ def get_service_key() -> str:
     return key
 
 
+def get_station_key() -> str:
+    """정류소 조회 API용 키. 별도 지정이 없으면 도착정보 키를 재사용한다.
+
+    정류소 조회 API가 도착정보 API와 다른 인증키로 발급된 경우
+    STATION_SERVICE_KEY 시크릿을 설정하면 그 키로 정류소 검색을 수행한다.
+    """
+    return os.environ.get("STATION_SERVICE_KEY") or get_service_key()
+
+
 def _get(url: str, params: dict[str, Any]) -> dict[str, Any] | None:
     try:
         resp = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
@@ -201,12 +210,14 @@ def load_config() -> list[dict[str, Any]]:
         return json.load(f)
 
 
-def build_rows(service_key: str, buses: list[dict[str, Any]]) -> list[dict[str, str]]:
+def build_rows(
+    service_key: str, station_key: str, buses: list[dict[str, Any]]
+) -> list[dict[str, str]]:
     rows = []
     for bus in sorted(buses, key=lambda b: b.get("order", 0)):
         station_id = bus.get("stationId")
         if not station_id:
-            station_id = resolve_station_id(service_key, bus["mobileNo"], bus["stationName"])
+            station_id = resolve_station_id(station_key, bus["mobileNo"], bus["stationName"])
 
         if not station_id:
             arrival = "정류소 ID 확인 실패"
@@ -263,8 +274,9 @@ def send_telegram_message(token: str, chat_id: str, text: str) -> None:
 
 def main() -> None:
     service_key = get_service_key()
+    station_key = get_station_key()
     buses = load_config()
-    rows = build_rows(service_key, buses)
+    rows = build_rows(service_key, station_key, buses)
 
     table = render_markdown_table(rows)
     print(table)

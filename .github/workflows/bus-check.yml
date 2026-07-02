@@ -29,6 +29,7 @@ jobs:
       - name: 버스 도착정보 조회
         env:
           BUS_SERVICE_KEY: ${{ secrets.BUS_SERVICE_KEY }}
+          STATION_SERVICE_KEY: ${{ secrets.STATION_SERVICE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DEBUG_BUS: ${{ inputs.debug && '1' || '0' }}

@@ -30,7 +30,8 @@
 
 | Secret 이름 | 값 | 필수 여부 |
 |---|---|---|
-| `BUS_SERVICE_KEY` | 공공데이터포털에서 발급받은 **디코딩** 인증키 | 필수 |
+| `BUS_SERVICE_KEY` | 도착정보 API(`busarrivalservice`)용 **디코딩** 인증키 | 필수 |
+| `STATION_SERVICE_KEY` | 정류소 조회 API(`busstationservice`)용 **디코딩** 인증키 | 선택 (stationId 자동 조회 시) |
 | `TELEGRAM_BOT_TOKEN` | 텔레그램 봇 토큰 (아래 2번 참고) | 선택 (알림 원할 때) |
 | `TELEGRAM_CHAT_ID` | 알림을 받을 나의 채팅 ID (아래 2번 참고) | 선택 (알림 원할 때) |
 
@@ -38,10 +39,10 @@
 문자가 없는 값)를 넣어야 합니다. 코드에서 `requests` 라이브러리가 요청 시 자동으로 URL 인코딩을
 하기 때문에, 이미 인코딩된 키(`n%2FaR5AGp...%3D%3D`)를 넣으면 이중 인코딩되어 인증 오류가 납니다.
 
-같은 공공데이터포털 계정 키 하나로 `busarrivalservice`(도착정보)와 `busstationservice`
-(정류소 검색) 두 API를 모두 호출하므로, **정류소 검색용 별도 secret은 필요 없습니다.**
-다만 포털에서 두 API를 각각 별도로 "활용신청"해서 승인받아야 정상 호출됩니다.
-(승인 상태는 공공데이터포털 **마이페이지 → 데이터활용 → Open API 활용신청 현황**에서 확인)
+정류소 조회 API(`busstationservice`)가 도착정보 API와 **다른 인증키**로 발급된 경우,
+그 디코딩 키를 `STATION_SERVICE_KEY` secret으로 등록하세요. 이 secret이 없으면 정류소 검색에도
+`BUS_SERVICE_KEY` 를 그대로 사용합니다. (config의 모든 항목에 `stationId` 를 직접 넣었다면 정류소
+조회 API 자체를 호출하지 않으므로 이 키는 불필요합니다.)
 
 ### 2. 텔레그램 푸시 알림 설정 (선택)
 

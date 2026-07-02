@@ -22,9 +22,9 @@ def main() -> None:
     if len(sys.argv) < 2:
         sys.exit("사용법: python scripts/lookup_station.py <정류소명 키워드>")
 
-    service_key = os.environ.get("BUS_SERVICE_KEY")
+    service_key = os.environ.get("STATION_SERVICE_KEY") or os.environ.get("BUS_SERVICE_KEY")
     if not service_key:
-        sys.exit("환경변수 BUS_SERVICE_KEY 를 설정해주세요.")
+        sys.exit("환경변수 STATION_SERVICE_KEY 또는 BUS_SERVICE_KEY 를 설정해주세요.")
 
     keyword = sys.argv[1]
     resp = requests.get(
