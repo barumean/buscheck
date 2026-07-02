@@ -261,11 +261,23 @@ def render_telegram_text(rows: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
-def send_telegram_message(token: str, chat_id: str, text: str) -> None:
-    # secret에 공백/줄바꿈이나 'bot' 접두어가 섞여도 안전하도록 정리한다.
+def build_telegram_token(token: str, bot_id: str | None) -> str:
+    """완전한 봇 토큰(`봇번호:인증문자열`)을 만든다.
+
+    - secret에 이미 완전한 토큰(`123456:AAHk...`)을 넣었으면 그대로 사용
+    - 인증문자열만 넣고(콜론 없음) TELEGRAM_BOT_ID 를 따로 넣었으면 둘을 합침
+    - 앞에 'bot' 접두어나 공백이 섞여도 정리
+    """
     token = token.strip()
     if token.lower().startswith("bot"):
         token = token[3:]
+    if ":" not in token and bot_id:
+        token = f"{bot_id.strip()}:{token}"
+    return token
+
+
+def send_telegram_message(token: str, chat_id: str, text: str, bot_id: str | None = None) -> None:
+    token = build_telegram_token(token, bot_id)
     chat_id = chat_id.strip()
     # 토큰 값은 노출하지 않고 형태(길이/콜론 위치)만 디버그로 확인한다.
     if DEBUG:
@@ -307,8 +319,11 @@ def main() -> None:
 
     telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN")
     telegram_chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    telegram_bot_id = os.environ.get("TELEGRAM_BOT_ID")
     if telegram_token and telegram_chat_id:
-        send_telegram_message(telegram_token, telegram_chat_id, render_telegram_text(rows))
+        send_telegram_message(
+            telegram_token, telegram_chat_id, render_telegram_text(rows), telegram_bot_id
+        )
     else:
         print(
             "[안내] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 가 설정되지 않아 "
