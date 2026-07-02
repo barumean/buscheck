@@ -96,35 +96,46 @@ def _extract_list(msg_body: dict[str, Any] | None, *keys: str) -> list[dict[str,
 
 
 def resolve_station_id(service_key: str, mobile_no: str, station_name: str) -> str | None:
-    """ARS번호(정류소번호)로 내부 stationId를 검색한다."""
-    data = _get(
-        STATION_SEARCH_URL,
-        {"serviceKey": service_key, "keyword": station_name, "format": "json"},
+    """ARS번호(정류소번호)로 내부 stationId를 검색한다.
+
+    정류소 조회 API의 keyword 는 정류소명뿐 아니라 정류소번호(ARS)도 지원하므로,
+    ARS번호로 검색해 정확히 일치하는 정류소의 stationId 를 돌려준다. ARS 검색이
+    비면 정류소명으로 한 번 더 시도한다.
+    """
+    for keyword in (str(mobile_no), station_name):
+        if not keyword:
+            continue
+        data = _get(
+            STATION_SEARCH_URL,
+            {"serviceKey": service_key, "keyword": keyword, "format": "json"},
+        )
+        if not data:
+            return None
+        _debug_dump(f"정류소 검색 원문 (keyword={keyword})", data)
+        body = _unwrap(data)
+        msg_header = body.get("msgHeader") or {}
+        if msg_header.get("resultCode") not in (0, "0", 200, "200"):
+            # 코드 4(결과 없음)면 다음 keyword로 재시도, 그 외는 경고 후 중단
+            if msg_header.get("resultCode") in (4, "4"):
+                continue
+            print(
+                f"[경고] 정류소 검색 실패 (keyword={keyword}): {msg_header.get('resultMessage')}",
+                file=sys.stderr,
+            )
+            return None
+
+        items = _extract_list(body.get("msgBody"), "busStationList", "busStationItem")
+        for item in items:
+            if str(item.get("mobileNo")) == str(mobile_no):
+                station_id = item.get("stationId")
+                if station_id is not None:
+                    return str(station_id)
+
+    print(
+        f"[경고] ARS번호 {mobile_no}({station_name})에 해당하는 stationId를 찾지 못했습니다. "
+        "config/buses.json 에 9자리 stationId를 직접 입력해주세요.",
+        file=sys.stderr,
     )
-    if not data:
-        return None
-    _debug_dump(f"정류소 검색 원문 ({station_name})", data)
-    body = _unwrap(data)
-    msg_header = body.get("msgHeader") or {}
-    if msg_header.get("resultCode") not in (0, "0", 200, "200"):
-        print(
-            f"[경고] 정류소 검색 실패 ({station_name}): {msg_header.get('resultMessage')}",
-            file=sys.stderr,
-        )
-        return None
-
-    items = _extract_list(body.get("msgBody"), "busStationList", "busStationItem")
-    for item in items:
-        if str(item.get("mobileNo")) == str(mobile_no):
-            station_id = item.get("stationId")
-            return str(station_id) if station_id is not None else None
-
-    if items:
-        print(
-            f"[경고] '{station_name}' 검색 결과 중 ARS번호 {mobile_no} 와 일치하는 "
-            "정류소를 찾지 못했습니다. config/buses.json 에 stationId를 직접 입력해주세요.",
-            file=sys.stderr,
-        )
     return None
 
 
