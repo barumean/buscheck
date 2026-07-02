@@ -4,7 +4,12 @@ on:
   schedule:
     # 06:20 KST(UTC+9) = 전날 21:20 UTC
     - cron: "20 21 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: "API 응답 원문을 로그에 출력 (구조 디버깅용)"
+        type: boolean
+        default: false
 
 jobs:
   check-bus-arrival:
@@ -26,4 +31,5 @@ jobs:
           BUS_SERVICE_KEY: ${{ secrets.BUS_SERVICE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DEBUG_BUS: ${{ inputs.debug && '1' || '0' }}
         run: python scripts/check_bus_arrival.py

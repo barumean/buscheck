@@ -44,6 +44,35 @@ def _get(url: str, params: dict[str, Any]) -> dict[str, Any] | None:
         return None
 
 
+DEBUG = os.environ.get("DEBUG_BUS") not in (None, "", "0", "false", "False")
+
+
+def _debug_dump(label: str, data: Any) -> None:
+    if not DEBUG:
+        return
+    try:
+        text = json.dumps(data, ensure_ascii=False)
+    except (TypeError, ValueError):
+        text = str(data)
+    print(f"[디버그] {label}: {text[:2000]}", file=sys.stderr)
+
+
+def _unwrap(data: dict[str, Any] | None) -> dict[str, Any]:
+    """공공데이터 API는 응답을 최상위 또는 'response' 키 아래에 두기도 한다.
+
+    msgHeader / msgBody 가 나오는 실제 계층을 찾아 dict로 돌려준다.
+    """
+    if not data:
+        return {}
+    if "msgHeader" in data or "msgBody" in data:
+        return data
+    for key in ("response", "Response", "OpenAPI_ServiceResponse"):
+        inner = data.get(key)
+        if isinstance(inner, dict):
+            return inner
+    return data
+
+
 def _extract_list(msg_body: dict[str, Any] | None, *keys: str) -> list[dict[str, Any]]:
     if not msg_body:
         return []
@@ -66,7 +95,9 @@ def resolve_station_id(service_key: str, mobile_no: str, station_name: str) -> s
     )
     if not data:
         return None
-    msg_header = data.get("msgHeader", {})
+    _debug_dump(f"정류소 검색 원문 ({station_name})", data)
+    body = _unwrap(data)
+    msg_header = body.get("msgHeader") or {}
     if msg_header.get("resultCode") not in (0, "0", 200, "200"):
         print(
             f"[경고] 정류소 검색 실패 ({station_name}): {msg_header.get('resultMessage')}",
@@ -74,7 +105,7 @@ def resolve_station_id(service_key: str, mobile_no: str, station_name: str) -> s
         )
         return None
 
-    items = _extract_list(data.get("msgBody"), "busStationList", "busStationItem")
+    items = _extract_list(body.get("msgBody"), "busStationList", "busStationItem")
     for item in items:
         if str(item.get("mobileNo")) == str(mobile_no):
             station_id = item.get("stationId")
@@ -121,12 +152,22 @@ def get_arrival_info(service_key: str, station_id: str, route_name: str) -> str:
     if not data:
         return "조회 실패"
 
-    msg_header = data.get("msgHeader", {})
+    _debug_dump(f"도착정보 원문 (stationId={station_id})", data)
+    body = _unwrap(data)
+    msg_header = body.get("msgHeader") or {}
     result_code = msg_header.get("resultCode")
     if result_code not in (0, "0", 200, "200"):
-        return f"조회 실패 ({msg_header.get('resultMessage', result_code)})"
+        detail = msg_header.get("resultMessage")
+        if detail is None:
+            # 인증/트래픽 초과 등은 cmmMsgHeader 아래에 오기도 한다.
+            detail = (
+                body.get("cmmMsgHeader", {}).get("returnAuthMsg")
+                or data.get("cmmMsgHeader", {}).get("returnAuthMsg")
+                or result_code
+            )
+        return f"조회 실패 ({detail})"
 
-    items = _extract_list(data.get("msgBody"), "busArrivalList", "busArrivalItem")
+    items = _extract_list(body.get("msgBody"), "busArrivalList", "busArrivalItem")
     matches = [it for it in items if str(it.get("routeName", "")).strip() == route_name.strip()]
 
     if not matches:
