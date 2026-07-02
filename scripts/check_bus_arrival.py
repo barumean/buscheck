@@ -135,7 +135,8 @@ def resolve_station_id(service_key: str, mobile_no: str, station_name: str) -> s
 
         items = _extract_list(body.get("msgBody"), "busStationList", "busStationItem")
         for item in items:
-            if str(item.get("mobileNo")) == str(mobile_no):
+            # API가 mobileNo를 " 27109"처럼 공백 포함으로 주기도 하므로 strip 후 비교
+            if str(item.get("mobileNo")).strip() == str(mobile_no).strip():
                 station_id = item.get("stationId")
                 if station_id is not None:
                     return str(station_id)
