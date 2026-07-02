@@ -78,19 +78,19 @@ Actions Summary로만 표시됩니다(생략 가능).
   "stationName": "인덕원퍼스비엘아파트.동아에코빌",
   "favorite": false,               // 즐겨타기 여부 (⭐ 표시용)
   "routeName": "1-1",              // 관심 노선번호
-  "stationId": null                // GBIS 내부 정류소ID (모르면 null로 두면 자동 조회)
+  "stationId": "27109"             // GBIS 도착정보 API 호출에 쓰이는 정류소 ID
 }
 ```
 
-- `mobileNo` 는 버스 정류장 표지판에 적힌 **정류소번호(ARS번호)** 입니다.
-- GBIS 도착정보 API는 `mobileNo`가 아닌 내부 `stationId` 를 요구하기 때문에,
-  `stationId` 가 `null` 이면 실행 시 정류소 검색 API로 자동으로 찾습니다.
-  - 자동 조회가 실패하거나 결과가 여러 개라 정확한 정류소를 특정하기 어려운 경우,
-    아래 디버그 스크립트로 직접 확인 후 `stationId` 값을 채워 넣으면
-    이후 실행부터는 검색 없이 바로 조회합니다(더 빠르고 안정적).
+- `mobileNo` 는 버스 정류장 표지판에 적힌 **정류소번호(ARS번호)** 이고, `stationId` 는
+  실제 API 호출에 쓰이는 값입니다. 등록된 3개 정류소(27109 / 27101 / 27146)는 확인 결과
+  두 값이 동일해서 `stationId` 에 그대로 채워두었습니다.
+- 새 정류소를 추가할 때 `stationId` 를 모르면 일단 `null` 로 두세요. 실행 시 정류소 검색
+  API로 자동 조회를 시도하며, 실패하거나 여러 결과가 나와 특정이 어려우면 아래 디버그
+  스크립트로 직접 확인 후 값을 채워 넣으면 이후 실행부터는 검색 없이 바로 조회합니다.
 
     ```bash
-    BUS_SERVICE_KEY=디코딩키 python scripts/lookup_station.py "인덕원퍼스비엘아파트"
+    BUS_SERVICE_KEY=디코딩키 python scripts/lookup_station.py "정류소명"
     ```
 
 - 노선이 상/하행 등으로 같은 이름이 여러 개 존재하는 정류소라면, 그 중 정류소 순번(`staOrder`)이
