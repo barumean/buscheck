@@ -261,6 +261,11 @@ def render_telegram_text(rows: list[dict[str, str]]) -> str:
 
 
 def send_telegram_message(token: str, chat_id: str, text: str) -> None:
+    # secret에 공백/줄바꿈이나 'bot' 접두어가 섞여도 안전하도록 정리한다.
+    token = token.strip()
+    if token.lower().startswith("bot"):
+        token = token[3:]
+    chat_id = chat_id.strip()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     try:
         resp = requests.post(url, json={"chat_id": chat_id, "text": text}, timeout=REQUEST_TIMEOUT)
