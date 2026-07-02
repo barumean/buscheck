@@ -40,7 +40,15 @@ def _get(url: str, params: dict[str, Any]) -> dict[str, Any] | None:
         resp.raise_for_status()
         return resp.json()
     except (requests.RequestException, ValueError) as exc:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
         print(f"[경고] API 요청 실패 ({url}): {exc}", file=sys.stderr)
+        if status == 403 and "busstationservice" in url:
+            print(
+                "[안내] 정류소 조회 API(busstationservice)가 활용신청되지 않아 stationId 자동 "
+                "조회가 불가합니다. 공공데이터포털에서 해당 API를 활용신청하거나, "
+                "config/buses.json의 각 항목에 9자리 stationId를 직접 입력하세요.",
+                file=sys.stderr,
+            )
         return None
 
 
