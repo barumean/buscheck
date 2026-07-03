@@ -117,8 +117,10 @@ API를 신청해야 합니다(신청 즉시 승인, 무료).
 
 ### GitHub Actions (자동/수동)
 
-- **자동 실행**: 매일 06:20(KST)에 자동 실행됩니다 (`.github/workflows/bus-check.yml`,
-  cron은 GitHub Actions 스케줄 특성상 몇 분 지연될 수 있습니다).
+- **자동 실행**: 매일 아침 도착정보가 오도록 예약돼 있습니다 (`.github/workflows/bus-check.yml`).
+  목표 도착 시각은 06:20(KST)이며, GitHub Actions 스케줄은 수 분~1시간까지 지연될 수 있어
+  이를 감안해 cron을 05:20(KST) 로 앞당겨 두었습니다. 실제 도착 시각을 정확히 맞추려면
+  아래 "폰에서 원탭 실행" 같은 직접 트리거를 병행하세요.
 - **수동 실행**: GitHub 웹 또는 **GitHub Mobile 앱**에서 리포지토리 →
   **Actions → 아침 버스 도착정보 확인 → Run workflow** 로 언제든 실행할 수 있습니다.
 - **폰에서 원탭 실행**: 홈 화면 아이콘 한 번으로 실행하려면

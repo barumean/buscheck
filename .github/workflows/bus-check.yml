@@ -2,8 +2,9 @@ name: 아침 버스 도착정보 확인
 
 on:
   schedule:
-    # 06:20 KST(UTC+9) = 전날 21:20 UTC
-    - cron: "20 21 * * *"
+    # 목표 도착 06:20 KST. GitHub Actions schedule은 보통 수 분~1시간 지연되므로
+    # 관측된 지연(약 1시간)을 감안해 1시간 앞당겨 설정: 05:20 KST(UTC+9) = 전날 20:20 UTC
+    - cron: "20 20 * * *"
   workflow_dispatch:
     inputs:
       debug:
