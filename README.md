@@ -121,6 +121,8 @@ API를 신청해야 합니다(신청 즉시 승인, 무료).
   cron은 GitHub Actions 스케줄 특성상 몇 분 지연될 수 있습니다).
 - **수동 실행**: GitHub 웹 또는 **GitHub Mobile 앱**에서 리포지토리 →
   **Actions → 아침 버스 도착정보 확인 → Run workflow** 로 언제든 실행할 수 있습니다.
+- **폰에서 원탭 실행**: 홈 화면 아이콘 한 번으로 실행하려면
+  [`docs/mobile-trigger.md`](docs/mobile-trigger.md) 참고 (iOS 단축어 / Android HTTP Shortcuts).
 - **결과 확인**: 실행이 끝난 워크플로 런을 열면 **Summary** 탭에 도착정보 표가 표시됩니다.
 - **텔레그램 알림**: `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` secret을 등록해두면
   (위 "초기 설정 → 2. 텔레그램 푸시 알림 설정" 참고) 실행할 때마다 텔레그램 메시지로도 받습니다.
@@ -139,4 +141,5 @@ config/buses.json              관심 정류소·노선 등록 목록
 scripts/check_bus_arrival.py   도착정보 조회 및 표 출력 메인 스크립트
 scripts/lookup_station.py      정류소명으로 stationId를 찾는 디버그용 CLI
 .github/workflows/bus-check.yml GitHub Actions 워크플로 (스케줄 + 수동 실행)
+docs/mobile-trigger.md         폰 홈 화면 원탭 버튼 설정 가이드
 ```
