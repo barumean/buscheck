@@ -125,6 +125,8 @@ API를 신청해야 합니다(신청 즉시 승인, 무료).
   **Actions → 아침 버스 도착정보 확인 → Run workflow** 로 언제든 실행할 수 있습니다.
 - **폰에서 원탭 실행**: 홈 화면 아이콘 한 번으로 실행하려면
   [`docs/mobile-trigger.md`](docs/mobile-trigger.md) 참고 (iOS 단축어 / Android HTTP Shortcuts).
+- **Android 앱 (즉시 확인)**: 앱을 열면 GBIS API를 직접 호출해 도착정보를 바로 화면에
+  표시합니다. 소스와 빌드 방법은 [`android/`](android/README.md) 참고.
 - **결과 확인**: 실행이 끝난 워크플로 런을 열면 **Summary** 탭에 도착정보 표가 표시됩니다.
 - **텔레그램 알림**: `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` secret을 등록해두면
   (위 "초기 설정 → 2. 텔레그램 푸시 알림 설정" 참고) 실행할 때마다 텔레그램 메시지로도 받습니다.

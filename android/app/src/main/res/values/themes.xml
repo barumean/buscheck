@@ -1,0 +1,7 @@
+<resources>
+    <!-- Compose 가 색을 그리므로 액티비티 테마는 액션바 없는 기본 플랫폼 테마만 사용 -->
+    <style name="Theme.BusCheck" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/ic_launcher_background</item>
+        <item name="android:windowBackground">@android:color/white</item>
+    </style>
+</resources>
